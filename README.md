@@ -1,7 +1,7 @@
 #Prerequisites:
 Install libtiff library from [here](http://download.osgeo.org/libtiff/)
 If installed correctly, the tiffio.h file should be present in 
-```/usr/local/bin ```
+```/usr/local/include```
 
 Download CImg library from [here](http://cimg.eu/download.shtml)
 ```bash

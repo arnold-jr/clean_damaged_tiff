@@ -66,10 +66,10 @@ CCVER        = `$(CC) -v 2>&1 | head -n 1`
 endif
 ifeq ($(notdir $(CC)),icpc)
 CCVER        = "icpc \( `$(CC) -v 2>&1`\)"
-CFLAGS       = -I/opt/local/include/CImg -I/opt/local/include/opencv -I/opt/local/include
+CFLAGS       = -I/usr/local/include/CImg -I/usr/local/include/opencv -I/usr/local/include
 LIBS         = 
 else
-CFLAGS       = -I/opt/local/include/CImg -I/opt/local/include/opencv -I/opt/local/include/ -Wall -W
+CFLAGS       = -I/usr/local/include/CImg -I/usr/local/include/opencv -I/usr/local/include/ -Wall -W
 LIBS         = -lm
 endif
 
