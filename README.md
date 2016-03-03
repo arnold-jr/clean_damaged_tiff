@@ -2,7 +2,7 @@
 
 Download CImg library from [here](http://cimg.eu/download.shtml)
 ```bash
-    sudo cp CImg.h /usr/local/include/.
+sudo cp CImg.h /usr/local/include/.
 ```
 If installed correctly, the tiffio.h file should be present in 
 ```/usr/local/bin ```
@@ -10,50 +10,52 @@ If installed correctly, the tiffio.h file should be present in
 #Installation:
 To compile convertTiff:
 ```bash
-    cd /path/to/convertTIFF/
-    make mymacosx
-    sudo cp convertTiff /usr/local/bin/.
+cd /path/to/convertTIFF/
+make mymacosx
+sudo cp convertTiff /usr/local/bin/.
 ```
 
 To check correct compilation, make a copy of the test image and convert it:
 ```bash
-    cp testImage/Al-K.tif .
-    convertTiff Al-K.tif
+cp testImage/Al-K.tif .
+convertTiff Al-K.tif
 ```
 
 To install bash script:
 ```bash
-    chmod +x cleanTiff.sh
-    sudo cp cleanTiff.sh /usr/local/bin/.
+chmod +x cleanTiff.sh
+sudo cp cleanTiff.sh /usr/local/bin/.
 ```
 
 To use, cd to the directory with the offending TIFF, which
 must have .tif extension. 
 ```bash
-    cd /path/to/dirty/tiffs
+cd /path/to/dirty/tiffs
 ```
 
 To clean all TIFFs:
 ```bash
-    cleanTiff.sh
+cleanTiff.sh
 ```
 
-To clean the specific TIFF <anyTiffFile>.tif:
+To clean the specific TIFF ```anyTiffFile.tif```:
 ```bash
-    cleanTiff.sh anyTiffFile
+cleanTiff.sh anyTiffFile
 ```
 
-To clean all tiffs matching a pattern, e.g. <anyTiff_E-KA>.tif
+To clean all tiffs matching a pattern, e.g. ``anyTiff_E-KA.tif```
 ```bash
-    cleanTiff.sh _E-KA
+cleanTiff.sh _E-KA
 ```
 
 ##Troubleshooting:
-If you see an error message like 'bin/bash^M', you should do the 
+If you see an error message like ```bin/bash^M```, you should do the 
 following:
 ```bash
-    vi cleanTiff.sh
-    :set fileformat=unix
-    :wq
+vi cleanTiff.sh
+```
+```vim
+:set fileformat=unix
+:wq
 ```
 This changes the line-endings to be unix type.
