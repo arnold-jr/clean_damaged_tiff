@@ -1,11 +1,12 @@
 #Prerequisites:
+Install libtiff library from [here](http://download.osgeo.org/libtiff/)
+If installed correctly, the tiffio.h file should be present in 
+```/usr/local/bin ```
 
 Download CImg library from [here](http://cimg.eu/download.shtml)
 ```bash
-sudo cp CImg.h /usr/local/include/.
+sudo cp <CImg-folder>/CImg.h /usr/local/include/.
 ```
-If installed correctly, the tiffio.h file should be present in 
-```/usr/local/bin ```
 
 #Installation:
 To compile convertTiff:
