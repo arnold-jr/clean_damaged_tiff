@@ -1,12 +1,20 @@
-#Prerequisites:
-Install libtiff library from [here](http://download.osgeo.org/libtiff/)
-If installed correctly, the tiffio.h file should be present in 
-```/usr/local/include```
+#Introduction:
+Converts a malformed TIFF using the forgiving CImg library. 
 
-Download CImg library from [here](http://cimg.eu/download.shtml)
-```bash
-sudo cp <CImg-folder>/CImg.h /usr/local/include/.
-```
+#Prerequisites:
+* xquartz
+  * If not already installed (Hint: ```which xquartz```)
+
+* libtiff
+  * Install libtiff library from [here](http://download.osgeo.org/libtiff/)
+  according to the instructions in its README. If installed correctly, 
+  the tiffio.h file should be present in ```/usr/local/include```
+
+* CImg
+  * Download CImg library from [here](http://cimg.eu/download.shtml)
+  ```bash
+  sudo mv -r <CImg-folder> /usr/local/include/.
+  ```
 
 #Installation:
 To compile convertTiff:

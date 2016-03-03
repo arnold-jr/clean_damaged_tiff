@@ -4,7 +4,7 @@
 #
 #  Description : Makefile for compiling CImg-based code on Unix.
 #                This file is a part of the CImg Library project.
-#                ( http://cimg.sourceforge.net )
+#                ( http://cimg.eu )
 #
 #  Copyright   : David Tschumperle
 #                ( http://tschumperle.users.greyc.fr/ )
@@ -55,22 +55,26 @@ CIMG_EXTRA_FILES = use_tiff_stream use_jpeg_buffer
 #---------------------------------
 CIMG_VERSION = _cimg_version
 X11PATH      = /usr/X11R6
-CC           = g++
 EXEPFX       =
-CCVER       = $(CC)
-ifeq ($(notdir $(CC)),g++)
-CCVER        = `$(CC) -v 2>&1 | tail -n 1`
-endif
-ifeq ($(notdir $(CC)),clang++)
-CCVER        = `$(CC) -v 2>&1 | head -n 1`
-endif
-ifeq ($(notdir $(CC)),icpc)
-CCVER        = "icpc \( `$(CC) -v 2>&1`\)"
-CFLAGS       = -I/usr/local/include/CImg -I/usr/local/include/opencv -I/usr/local/include
-LIBS         = 
+ifeq ($(MSYSTEM),MINGW32)
+EXESFX       = .exe
 else
-CFLAGS       = -I/usr/local/include/CImg -I/usr/local/include/opencv -I/usr/local/include/ -Wall -W
-LIBS         = -lm
+EXESFX       =
+endif
+CXXVER       = $(CXX)
+ifeq ($(notdir $(CXX)),g++)
+CXXVER       = `$(CXX) -v 2>&1 | tail -n 1`
+endif
+ifeq ($(notdir $(CXX)),clang++)
+CXXVER       = `$(CXX) -v 2>&1 | head -n 1`
+endif
+ifeq ($(notdir $(CXX)),icpc)
+CXXVER       = "icpc \( `$(CXX) -v 2>&1`\)"
+CFLAGS       = -I/usr/local/include/CImg -I/usr/local/include/opencv -I/usr/local/include 
+LIBS         = -L/usr/local/lib/
+else
+CFLAGS       = -I/usr/local/include/CImg -I/usr/local/include/opencv -I/usr/local/include -Wall -W
+LIBS         = -L/usr/local/lib -lm
 endif
 
 #--------------------------------------------------
@@ -78,10 +82,10 @@ endif
 #--------------------------------------------------
 
 # Flags to enable strict code standards
-ifeq ($(notdir $(CC)),icpc)
-CIMG_ANSI_CFLAGS = -std=c++11 -ansi
+ifeq ($(notdir $(CXX)),icpc)
+CIMG_ANSI_CFLAGS = -std=c++11
 else
-CIMG_ANSI_CFLAGS = -std=c++11 -ansi -pedantic
+CIMG_ANSI_CFLAGS = -std=c++11 -pedantic
 endif
 
 # Flags to enable code debugging.
@@ -92,10 +96,10 @@ CIMG_DEBUG_CFLAGS = -Dcimg_verbosity=3 -Dcimg_strict_warnings -g -fsanitize=addr
 CIMG_VT100_CFLAGS = -Dcimg_use_vt100
 
 # Flags to enable code optimization by the compiler.
-ifeq ($(notdir $(CC)),g++)
+ifeq ($(notdir $(CXX)),g++)
 CIMG_OPT_CFLAGS = -O2 -mtune=generic
 else
-ifeq ($(notdir $(CC)),icpc)
+ifeq ($(notdir $(CXX)),icpc)
 CIMG_OPT_CFLAGS = -fast
 else
 CIMG_OPT_CFLAGS = -O2
@@ -103,89 +107,117 @@ endif
 endif
 
 # Flags to enable OpenMP support.
-ifeq ($(notdir $(CC)),icpc)
+ifeq ($(notdir $(CXX)),icpc)
 CIMG_OPENMP_CFLAGS = #-Dcimg_use_openmp -openmp -i-static    # -> Seems to bug the compiler!
 else
-CIMG_OPENMP_CFLAGS = -Dcimg_use_openmp -fopenmp
+CIMG_OPENMP_DEFINE = -Dcimg_use_openmp -fopenmp
+CIMG_OPENMP_INCDIR =
+CIMG_OPENMP_CFLAGS = $(CIMG_OPENMP_DEFINE) $(CIMG_OPENMP_INCDIR)
 endif
 
 # Flags to enable OpenCV support.
-CIMG_OPENCV_CFLAGS = -Dcimg_use_opencv -I/usr/include/opencv
-CIMG_OPENCV_LIBS = -lopencv_core -lopencv_highgui
-#CIMG_OPENCV_LIBS = -lcv -lhighgui    #-> Use this for OpenCV < 2.2.0
+CIMG_OPENCV_DEFINE = -Dcimg_use_opencv
+CIMG_OPENCV_INCDIR = `pkg-config opencv --cflags || echo -I/usr/include/opencv` -I/usr/include/opencv
+CIMG_OPENCV_CFLAGS = $(CIMG_OPENCV_DEFINE) $(CIMG_OPENCV_INCDIR)
+CIMG_OPENCV_LIBS = `pkg-config opencv --libs || echo -lopencv_core -lopencv_highgui`
 
 # Flags used to disable display capablities of CImg
 CIMG_NODISPLAY_CFLAGS = -Dcimg_display=0
 
 # Flags to enable the use of the X11 library.
 # (X11 is used by CImg to handle display windows)
-# !!! For 64bits systems : replace -L$(X11PATH)/lib by -L$(X11PATH)/lib64 !!!
-CIMG_X11_CFLAGS = -I$(X11PATH)/include
-CIMG_X11_LIBS = -L$(X11PATH)/lib -lpthread -lX11
+CIMG_X11_DEFINE = -Dcimg_display=1
+CIMG_X11_INCDIR = `pkg-config --cflags x11 || echo -I/usr/X11R6/include`
+CIMG_X11_CFLAGS = $(CIMG_X11_DEFINE) $(CIMG_X11_INCDIR)
+CIMG_X11_LIBS = `pkg-config --libs x11 || echo -L/usr/X11R6/lib -lX11` -lpthread
 
 # Flags to enable fast image display, using the XSHM library (when using X11).
 # !!! Seems to randomly crash when used on MacOSX and 64bits systems, so use it only when necessary !!!
-CIMG_XSHM_CFLAGS = # -Dcimg_use_xshm
-CIMG_XSHM_LIBS = # -lXext
+CIMG_XSHM_CFLAGS = # -Dcimg_use_xshm `pkg-config --cflags xcb-shm`
+CIMG_XSHM_LIBS = # `pkg-config --libs xcb-shm || echo -L$(USR)/X11R6/lib -lXext`
 
 # Flags to enable GDI32 display (Windows native).
-CIMG_GDI32_CFLAGS = -mwindows
+CIMG_GDI32_DEFINE = -mwindows
+CIMG_GDI32_INCDIR =
+CIMG_GDI32_CFLAGS = $(CIMG_GDI32_DEFINE) $(CIMG_GDI32_INCDIR)
 CIMG_GDI32_LIBS = -lgdi32
 
 # Flags to enable screen mode switching, using the XRandr library (when using X11).
 # ( http://www.x.org/wiki/Projects/XRandR )
 # !!! Not supported by the X11 server on MacOSX, so do not use it on MacOSX !!!
-CIMG_XRANDR_CFLAGS = -Dcimg_use_xrandr
+CIMG_XRANDR_DEFINE = -Dcimg_use_xrandr
+CIMG_XRANDR_INCDIR =
+CIMG_XRANDR_CFLAGS = $(CIMG_XRANDR_DEFINE) $(CIMG_XRANDR_INCDIR)
 CIMG_XRANDR_LIBS = -lXrandr
 
 # Flags to enable native support for PNG image files, using the PNG library.
 # ( http://www.libpng.org/ )
-CIMG_PNG_CFLAGS = -Dcimg_use_png
+CIMG_PNG_DEFINE = -Dcimg_use_png
+CIMG_PNG_INCDIR =
+CIMG_PNG_CFLAGS = $(CIMG_PNG_DEFINE) $(CIMG_PNG_INCDIR)
 CIMG_PNG_LIBS = -lpng -lz
 
 # Flags to enable native support for JPEG image files, using the JPEG library.
 # ( http://www.ijg.org/ )
-CIMG_JPEG_CFLAGS = -Dcimg_use_jpeg
+CIMG_JPEG_DEFINE = -Dcimg_use_jpeg
+CIMG_JPEG_INCDIR =
+CIMG_JPEG_CFLAGS = $(CIMG_JPEG_DEFINE) $(CIMG_JPEG_INCDIR)
 CIMG_JPEG_LIBS = -ljpeg
 
 # Flags to enable native support for TIFF image files, using the TIFF library.
 # ( http://www.libtiff.org/ )
-CIMG_TIFF_CFLAGS = -Dcimg_use_tiff
+CIMG_TIFF_DEFINE = -Dcimg_use_tiff
+CIMG_TIFF_INCDIR =
+CIMG_TIFF_CFLAGS = $(CIMG_TIFF_DEFINE) $(CIMG_TIFF_INCDIR)
 CIMG_TIFF_LIBS = -ltiff
 
 # Flags to enable native support for MINC2 image files, using the MINC2 library.
 # ( http://en.wikibooks.org/wiki/MINC/Reference/MINC2.0_Users_Guide )
-CIMG_MINC2_CFLAGS = -Dcimg_use_minc2 -I${HOME}/local/include
+CIMG_MINC2_DEFINE = -Dcimg_use_minc2
+CIMG_MINC2_INCDIR = -I${HOME}/local/include
+CIMG_MINC2_CFLAGS = $(CIMG_MINC2_DEFINE) $(CIMG_MINC2_INCDIR)
 CIMG_MINC2_LIBS = -lminc_io -lvolume_io2 -lminc2 -lnetcdf -lhdf5 -lz -L${HOME}/local/lib
 
 # Flags to enable native support for EXR image files, using the OpenEXR library.
 # ( http://www.openexr.com/ )
-CIMG_EXR_CFLAGS = -Dcimg_use_openexr -I/usr/include/OpenEXR
+CIMG_EXR_DEFINE = -Dcimg_use_openexr
+CIMG_EXR_INCDIR = -I/usr/include/OpenEXR
+CIMG_EXR_CFLAGS = $(CIMG_EXR_DEFINE) $(CIMG_EXR_INCDIR)
 CIMG_EXR_LIBS = -lIlmImf -lHalf
 
 # Flags to enable native support for various video files, using the FFMPEG library.
 # ( http://www.ffmpeg.org/ )
-CIMG_FFMPEG_CFLAGS = -Dcimg_use_ffmpeg -D__STDC_CONSTANT_MACROS -I/usr/include/libavcodec -I/usr/include/libavformat -I/usr/include/libswscale -I/usr/include/ffmpeg
+CIMG_FFMPEG_DEFINE = -Dcimg_use_ffmpeg -D__STDC_CONSTANT_MACROS
+CIMG_FFMPEG_INCDIR = -I/usr/include/libavcodec -I/usr/include/libavformat -I/usr/include/libswscale -I/usr/include/ffmpeg
+CIMG_FFMPEG_CFLAGS = $(CIMG_FFMPEG_DEFINE) $(CIMG_FFMPEG_INCDIR)
 CIMG_FFMPEG_LIBS = -lavcodec -lavformat -lswscale
 
 # Flags to enable native support for compressed .cimgz files, using the Zlib library.
 # ( http://www.zlib.net/ )
-CIMG_ZLIB_CFLAGS = -Dcimg_use_zlib
-CIMG_ZLIB_LIBS = -lz
+CIMG_ZLIB_DEFINE = -Dcimg_use_zlib
+CIMG_ZLIB_INCDIR = `pkg-config --cflags zlib || echo -I$(USR)/$(INCLUDE)`
+CIMG_ZLIB_CFLAGS = $(CIMG_ZLIB_DEFINE) $(CIMG_ZLIB_INCDIR)
+CIMG_ZLIB_LIBS = `pkg-config --libs zlib || echo -lz`
 
 # Flags to enable native support for downloading files from the network.
 # ( http://curl.haxx.se/libcurl/ )
-CIMG_CURL_CFLAGS = -Dcimg_use_curl
+CIMG_CURL_DEFINE = -Dcimg_use_curl
+CIMG_CURL_INCDIR =
+CIMG_CURL_CFLAGS = $(CIMG_CURL_DEFINE)
 CIMG_CURL_LIBS = -lcurl
 
 # Flags to enable native support of most classical image file formats, using the Magick++ library.
 # ( http://www.imagemagick.org/Magick++/ )
-CIMG_MAGICK_CFLAGS = -Dcimg_use_magick `Magick++-config --cppflags` `Magick++-config --cxxflags`
-CIMG_MAGICK_LIBS = `Magick++-config --ldflags` `Magick++-config --libs`
+CIMG_MAGICK_DEFINE = -Dcimg_use_magick
+CIMG_MAGICK_INCDIR = `pkg-config --cflags GraphicsMagick++ || echo -I$(USR)/$(INCLUDE)/GraphicsMagick`
+CIMG_MAGICK_CFLAGS = $(CIMG_MAGICK_DEFINE) $(CIMG_MAGICK_INCDIR)
+CIMG_MAGICK_LIBS = `pkg-config --libs GraphicsMagick++ || echo -lGraphicsMagick++`
 
 # Flags to enable faster Discrete Fourier Transform computation, using the FFTW3 library
 # ( http://www.fftw.org/ )
-CIMG_FFTW3_CFLAGS = -Dcimg_use_fftw3
+CIMG_FFTW3_DEFINE = -Dcimg_use_fftw3
+CIMG_FFTW3_INCDIR =
+CIMG_FFTW3_CFLAGS = $(CIMG_FFTW3_DEFINE) $(CIMG_FFTW3_INCDIR)
 ifeq ($(OSTYPE),msys)
 CIMG_FFTW3_LIBS = -lfftw3-3
 else
@@ -194,12 +226,16 @@ endif
 
 # Flags to enable the use of LAPACK routines for matrix computation
 # ( http://www.netlib.org/lapack/ )
-CIMG_LAPACK_CFLAGS = -Dcimg_use_lapack
+CIMG_LAPACK_DEFINE = -Dcimg_use_lapack
+CIMG_LAPACK_INCDIR =
+CIMG_LAPACK_CFLAGS = $(CIMG_LAPACK_DEFINE) $(CIMG_LAPACK_INCDIR)
 CIMG_LAPACK_LIBS = -lblas -lg2c -llapack
 
 # Flags to enable the use of the Board library
 # ( http://libboard.sourceforge.net/ )
-CIMG_BOARD_CFLAGS = -Dcimg_use_board -I/usr/include/board
+CIMG_BOARD_DEFINE = -Dcimg_use_board
+CIMG_BOARD_INCDIR = -I/usr/include/board
+CIMG_BOARD_CFLAGS = $(CIMG_BOARD_DEFINE) $(CIMG_BOARD_INCDIR)
 CIMG_BOARD_LIBS = -lboard
 
 # Flags to compile on Sun Solaris
@@ -215,15 +251,11 @@ endif
 #-------------------------
 .cpp:
 	@echo
-	@echo "** Compiling '$* ($(CIMG_VERSION))' with '$(CCVER)'"
+	@echo "** Compiling '$* ($(CIMG_VERSION))' with '$(CXXVER)'"
 	@echo
-	$(CC) -o $(EXEPFX)$* $< $(CFLAGS) $(CONF_CFLAGS) $(LIBS) $(CONF_LIBS)
+	$(CXX) -o $(EXEPFX)$*$(EXESFX) $< $(CFLAGS) $(CONF_CFLAGS) $(LIBS) $(CONF_LIBS)
 ifeq ($(STRIP_EXE),true)
-ifeq ($(MSYSTEM),MINGW32)
-	strip $(EXEPFX)$*.exe
-else
-	strip $(EXEPFX)$*
-endif
+	strip $(EXEPFX)$*$(EXESFX)
 endif
 menu:
 	@echo
@@ -463,29 +495,6 @@ $(CIMG_X11_LIBS) \
 $(CIMG_TIFF_LIBS)" \
 all
 
-myMmacosx:
-	@$(MAKE) \
-"CONF_CFLAGS = \
-$(CIMG_OPT_CFLAGS) \
-$(CIMG_VT100_CFLAGS) \
-$(CIMG_X11_CFLAGS) \
-$(CIMG_TIFF_CFLAGS) \
-$(CIMG_EXR_CFLAGS) \
-$(CIMG_PNG_CFLAGS) \
-$(CIMG_JPEG_CFLAGS) \
-$(CIMG_ZLIB_CFLAGS) \
-$(CIMG_OPENCV_CFLAGS)" \
-"CONF_LIBS = \
-$(CIMG_X11_LIBS) \
-$(CIMG_TIFF_LIBS) \
-$(CIMG_EXR_LIBS) \
-$(CIMG_PNG_LIBS) \
-$(CIMG_JPEG_LIBS) \
-$(CIMG_ZLIB_LIBS) \
-$(CIMG_OPENCV_LIBS)" \
-all $(CIMG_EXTRA_FILES)
-
-# MacOsX targets, with X11 display.
 macosx:
 	@$(MAKE) \
 "CONF_CFLAGS = \
